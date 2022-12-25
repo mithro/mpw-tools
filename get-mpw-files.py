@@ -11,7 +11,7 @@ import urllib.request
 import shutil
 
 
-def get_data(f):
+def load_manifest_data(f):
     rows = []
     with open(f, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
@@ -45,13 +45,20 @@ def to_path(l):
 
 
 def report_progress(chunk_number, chunk_size, full_size):
-    if (chunk_number % 1000) == 0:
+    if (chunk_number % 10000) == 0:
         return
     downloaded = chunk_number*chunk_size
     if full_size == -1:
         print('.', end='', flush=True)
     else:
         print('\r%04.2f%%' % downloaded/full_size, end='', flush=True)
+
+
+def filename(url):
+    p = to_path(url)
+    if p.suffix not in ('.gz',):
+        return pathlib.Path(p.name)
+    return pathlib.Path(p.stem)
 
 
 def download(url):
@@ -83,7 +90,8 @@ def download(url):
     return pathlib.Path(p.stem)
 
 
-def check(fn):
+def check(fn, h):
+    print('Checking', fn, '...', end=' ', flush=True)
     m = hashlib.sha1()
     with open(fn, 'rb') as f:
         m.update(f.read())
@@ -93,31 +101,44 @@ def check(fn):
             if not data:
                break
             m.update(data)
-    return m.hexdigest()
+    nh = m.hexdigest()
+    print('got', h, 'needed', nh, end=' ', flush=True)
+    matches = (h == nh)
+    if matches:
+        print('MATCHES!')
+    else:
+        print("DOESN'T MATCH!")
+    return matches
 
 
 def main(args):
     for f in args:
-        # urllib.request.urlretrieve
         print()
         print(f)
         print('-'*75)
-        data = get_data(f)
+        data = load_manifest_data(f)
         for r in data:
-            fn = download(r['LINK'])
-
-            assert fn.exists(), (fn, r)
+            fn = filename(r['LINK'])
             assert fn.suffix in ('.gds', '.oas'), (fn, r)
 
-            print('Checking', fn, '...', end=' ', flush=True)
-            h = check(fn)
-            print('got', h, 'needed', r['SHASUM'], end=' ', flush=True)
+            matches = None
+            if fn.exists():
+                matches = check(fn, r['SHASUM'])
+                if not matches:
+                    d = pathlib.Path()
+                    for p in d.glob(fn.name+'*'):
+                        print('Removing ', p)
+                        p.unlink()
 
-            r['valid'] = (h == r['SHASUM'])
-            if r['valid']:
-                print('MATCHES!')
-            else:
-                print("DOESN'T MATCH!")
+            if not fn.exists():
+                fn = download(r['LINK'])
+                matches = check(fn, r['SHASUM'])
+
+            assert fn.exists(), (fn, r)
+
+            assert matches is not None, (matches, r)
+            r['VALID'] = matches
+
     return 0
 
 
