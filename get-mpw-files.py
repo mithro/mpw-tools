@@ -111,6 +111,9 @@ def check(fn, h):
     return matches
 
 
+REMOVE = False
+
+
 def main(args):
     for f in args:
         print()
@@ -124,7 +127,7 @@ def main(args):
             matches = None
             if fn.exists():
                 matches = check(fn, r['SHASUM'])
-                if not matches:
+                if not matches and REMOVE:
                     d = pathlib.Path()
                     for p in d.glob(fn.name+'*'):
                         print('Removing ', p)
