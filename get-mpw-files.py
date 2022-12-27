@@ -124,6 +124,8 @@ def main(args):
             fn = filename(r['LINK'])
             assert fn.suffix in ('.gds', '.oas'), (fn, r)
 
+            print('Slot', r['SLOT'], '...', end=" ", flush=True)
+
             matches = None
             if fn.exists():
                 matches = check(fn, r['SHASUM'])
