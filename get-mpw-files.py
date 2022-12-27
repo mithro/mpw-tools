@@ -143,6 +143,8 @@ def main(args):
 
             assert matches is not None, (matches, r)
             r['VALID'] = matches
+            if not matches:
+                print('  Downloaded from', r['LINK'])
 
     return 0
 
