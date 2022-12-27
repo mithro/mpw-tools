@@ -102,7 +102,7 @@ def check(fn, h):
                break
             m.update(data)
     nh = m.hexdigest()
-    print('got', h, 'needed', nh, end=' ', flush=True)
+    print('got', nh, 'needed', h, end=' ', flush=True)
     matches = (h == nh)
     if matches:
         print('MATCHES!')
