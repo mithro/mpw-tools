@@ -7,8 +7,8 @@ import hashlib
 import os
 import pathlib
 import pprint
-import urllib.request
 import shutil
+import urllib.request
 
 
 def load_manifest_data(f):
