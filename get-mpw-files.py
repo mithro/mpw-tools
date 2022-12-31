@@ -102,7 +102,7 @@ def check(fn, h):
                break
             m.update(data)
     nh = m.hexdigest()
-    print('got', h, 'needed', nh, end=' ', flush=True)
+    print('got', nh, 'needed', h, end=' ', flush=True)
     matches = (h == nh)
     if matches:
         print('MATCHES!')
@@ -120,9 +120,15 @@ def main(args):
         print(f)
         print('-'*75)
         data = load_manifest_data(f)
+        slots = {}
         for r in data:
             fn = filename(r['LINK'])
             assert fn.suffix in ('.gds', '.oas'), (fn, r)
+
+            slot = int(r['SLOT'].lstrip('0'))
+            assert slot not in slots, (slot, r, slots[slot])
+            slots[slot] = r
+            print('Slot', r['SLOT'], '...', end=" ", flush=True)
 
             matches = None
             if fn.exists():
@@ -141,6 +147,13 @@ def main(args):
 
             assert matches is not None, (matches, r)
             r['VALID'] = matches
+            if not matches:
+                print('  Downloaded from', r['LINK'])
+
+        for i in range(1, 41):
+            if i in slots:
+                continue
+            print('Missing slot', '%03s' % i)
 
     return 0
 
